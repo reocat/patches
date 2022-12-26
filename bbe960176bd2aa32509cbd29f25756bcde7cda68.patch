@@ -1,0 +1,140 @@
+From bbe960176bd2aa32509cbd29f25756bcde7cda68 Mon Sep 17 00:00:00 2001
+From: WinKarbik <karbainovs@mail.ru>
+Date: Thu, 18 Aug 2022 01:28:23 +0800
+Subject: [PATCH] ido: mainline
+
+---
+ .../boot/dts/qcom/msm8939-xiaomi-ido.dts      | 54 +++++++++++++------
+ .../gpu/drm/panel/msm8916-generated/Makefile  |  1 +
+ 2 files changed, 39 insertions(+), 16 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8939-xiaomi-ido.dts b/arch/arm64/boot/dts/qcom/msm8939-xiaomi-ido.dts
+index a757d99bb933..98610c7ddb35 100644
+--- a/arch/arm64/boot/dts/qcom/msm8939-xiaomi-ido.dts
++++ b/arch/arm64/boot/dts/qcom/msm8939-xiaomi-ido.dts
+@@ -86,7 +86,7 @@
+ 		compatible = "pwm-backlight";
+ 		pwms = <&pm8916_pwm 0 100000>;
+ 
+-		brightness-levels = <1 255>;
++		brightness-levels = <0 255>;
+ 		num-interpolated-steps = <255>;
+ 		default-brightness-level = <255>;
+ 	};
+@@ -95,7 +95,7 @@
+ &blsp1_uart2 {
+ 	status = "okay";
+ };
+-/*
++
+ &blsp_i2c2 {
+ 	status = "okay";
+ 
+@@ -123,23 +123,46 @@
+ 		};
+ 	};
+ };
++/*
++&blsp_i2c4 {
++        #address-cells = <1>;
++        #size-cells = <0>;
++
++        cw2015@62 {
++            compatible = "cellwise,cw2015";
++            reg = <0x62>;
++            cellwise,battery-profile = /bits/ 8 <
++                0x17 0x67 0x80 0x73 0x6E 0x6C 0x6B 0x63
++                0x77 0x51 0x5C 0x58 0x50 0x4C 0x48 0x36
++                0x15 0x0C 0x0C 0x19 0x5B 0x7D 0x6F 0x69
++                0x69 0x5B 0x0C 0x29 0x20 0x40 0x52 0x59
++                0x57 0x56 0x54 0x4F 0x3B 0x1F 0x7F 0x17
++                0x06 0x1A 0x30 0x5A 0x85 0x93 0x96 0x2D
++                0x48 0x77 0x9C 0xB3 0x80 0x52 0x94 0xCB
++                0x2F 0x00 0x64 0xA5 0xB5 0x11 0xF0 0x11
++           >;
++           cellwise,monitor-interval-ms = <5000>;
++           monitored-battery = <&bat>;
++           //power-supplies = <&mains_charger>, <&usb_charger>;
++       };
++    };
+ */
+ &blsp_i2c5 {
+ 	status = "okay";
+ 
+ 	touchscreen@3e {
+-		/* Likely some other model but works just fine with this one */
++		/* actually FT5336 */
+ 		compatible = "edt,edt-ft5306";
+ 		reg = <0x3e>;
+ 
+ 		interrupt-parent = <&msmgpio>;
+ 		interrupts = <13 0x2008>;
+ 
+-		reset-gpios = <&msmgpio 12 GPIO_ACTIVE_LOW>;
+-
+ 		vcc-supply = <&pm8916_l17>;
+ 		iovcc-supply = <&pm8916_l6>;
+ 
++		reset-gpios = <&msmgpio 12 GPIO_ACTIVE_LOW>;
++
+ 		touchscreen-size-x = <720>;
+ 		touchscreen-size-y = <1280>;
+ 
+@@ -157,7 +180,7 @@
+ 		#address-cells = <1>;
+ 		#size-cells = <0>;
+ 
+-		vcc-supply = <&pm8916_l16>;
++		vcc-supply = <&pm8916_l17>;
+ 
+ 		led@0 {
+ 			reg = <0>;
+@@ -191,8 +214,8 @@
+ 		compatible = "xiaomi,ido-panel";
+ 		reg = <0>;
+ 
+-//        vsp-supply = <&reg_lcd_pos>;
+-//		vsn-supply = <&reg_lcd_neg>;
++        vsp-supply = <&reg_lcd_pos>;
++		vsn-supply = <&reg_lcd_neg>;
+ 
+ 		backlight = <&backlight>;
+ 		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
+@@ -396,14 +419,6 @@
+ 		bias-pull-up;
+ 	};
+ 
+-    tps65132_en_default: tps65132-en-default {
+-		pins = "gpio97", "gpio98";
+-		function = "gpio";
+-
+-		drive-strength = <2>;
+-		bias-pull-down;
+-	};
+-
+     mdss {
+ 		mdss_default: mdss-default {
+ 			pins = "gpio25";
+@@ -437,6 +452,13 @@
+ 		};
+ 	};
+ 
++    tps65132_en_default: tps65132-en-default {
++		pins = "gpio97", "gpio98";
++		function = "gpio";
++
++		drive-strength = <2>;
++		bias-pull-down;
++	};
+ };
+ 
+ &pm8916_mpps {
+diff --git a/drivers/gpu/drm/panel/msm8916-generated/Makefile b/drivers/gpu/drm/panel/msm8916-generated/Makefile
+index 32a5d0635a48..1897ec28f515 100644
+--- a/drivers/gpu/drm/panel/msm8916-generated/Makefile
++++ b/drivers/gpu/drm/panel/msm8916-generated/Makefile
+@@ -25,3 +25,4 @@ obj-$(CONFIG_DRM_PANEL_MSM8916_GENERATED) += panel-wingtech-sharp-r69431.o
+ obj-$(CONFIG_DRM_PANEL_MSM8916_GENERATED) += panel-wingtech-tianma-hx8394d.o
+ obj-$(CONFIG_DRM_PANEL_MSM8916_GENERATED) += panel-wingtech-yassy-ili9881.o
+ obj-$(CONFIG_DRM_PANEL_MSM8916_GENERATED) += panel-xiaomi-ili9881c-tianma.o
++obj-$(CONFIG_DRM_PANEL_MSM8916_GENERATED) += panel-xiaomi-hx8394f-boe.o

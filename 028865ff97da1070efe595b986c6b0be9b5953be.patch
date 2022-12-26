@@ -1,0 +1,21 @@
+From 028865ff97da1070efe595b986c6b0be9b5953be Mon Sep 17 00:00:00 2001
+From: reocat <111279389+reocat@users.noreply.github.com>
+Date: Sun, 18 Dec 2022 14:21:25 +0300
+Subject: [PATCH] Update Makefile
+
+---
+ arch/arm64/boot/dts/qcom/Makefile | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
+index 9c01cdb5d9e0e..6ee16dd594532 100644
+--- a/arch/arm64/boot/dts/qcom/Makefile
++++ b/arch/arm64/boot/dts/qcom/Makefile
+@@ -38,6 +38,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= msm8939-alcatel-idol3.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= msm8939-bq-piccolo.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= msm8939-htc-m8qlul.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= msm8939-huawei-kiwi.dtb
++dtb-$(CONFIG_ARCH_QCOM)	+= msm8939-xiaomi-ido.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= msm8939-samsung-a7.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= msm8992-bullhead-rev-101.dtb
+ dtb-$(CONFIG_ARCH_QCOM)	+= msm8992-msft-lumia-octagon-talkman.dtb

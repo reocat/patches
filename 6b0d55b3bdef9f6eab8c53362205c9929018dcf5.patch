@@ -1,0 +1,768 @@
+From 6b0d55b3bdef9f6eab8c53362205c9929018dcf5 Mon Sep 17 00:00:00 2001
+From: WinKarbik <karbainovs@mail.ru>
+Date: Thu, 18 Aug 2022 01:28:23 +0800
+Subject: [PATCH] ido: mainline
+
+---
+ .../boot/dts/qcom/msm8939-xiaomi-ido.dts      | 452 ++++++++++++++++++
+ arch/arm64/configs/msm8916_defconfig          |   7 +-
+ .../gpu/drm/panel/msm8916-generated/Makefile  |   1 +
+ .../panel-xiaomi-ili9881c-tianma.c            | 259 ++++++++++
+ 4 files changed, 718 insertions(+), 1 deletion(-)
+ create mode 100644 arch/arm64/boot/dts/qcom/msm8939-xiaomi-ido.dts
+ create mode 100644 drivers/gpu/drm/panel/msm8916-generated/panel-xiaomi-ili9881c-tianma.c
+
+diff --git a/arch/arm64/boot/dts/qcom/msm8939-xiaomi-ido.dts b/arch/arm64/boot/dts/qcom/msm8939-xiaomi-ido.dts
+new file mode 100644
+index 0000000000000..a757d99bb9338
+--- /dev/null
++++ b/arch/arm64/boot/dts/qcom/msm8939-xiaomi-ido.dts
+@@ -0,0 +1,452 @@
++// SPDX-License-Identifier: GPL-2.0-only
++
++/dts-v1/;
++
++#include "msm8939.dtsi"
++#include "pm8916.dtsi"
++#include <dt-bindings/gpio/gpio.h>
++#include <dt-bindings/pinctrl/qcom,pmic-mpp.h>
++#include <dt-bindings/leds/common.h>
++
++/ {
++	model = "Xiaomi Redmi 3";
++	compatible = "xiaomi,ido", "qcom,msm8939", "qcom,msm8939-qrd-skuk", "qcom,qrd";
++	chassis-type = "handset";
++	qcom,msm-id = <239 0>;
++	qcom,board-id = <0x1000b 11>, <0x2000b 11>;
++
++	aliases {
++		serial0 = &blsp1_uart2;
++	};
++
++	chosen {
++		stdout-path = "serial0";
++/*
++		bootargs = "earlycon=tty0 console=tty0";
++		#address-cells = <2>;
++		#size-cells = <2>;
++		ranges;
++
++		framebuffer0: framebuffer@83003000 {
++			status= "okay";
++			compatible = "simple-framebuffer";
++			reg = <0x0 0x83200000 0x0 0x2000000>;
++			width = <720>;
++			height = <1280>;
++			stride = <(720 * 3)>;
++			format = "r8g8b8";
++		};*/
++
++	};
++
++    reserved-memory {
++        /delete-node/ rmtfs@86681000;
++		/delete-node/ rfsa@867e0000;
++		/delete-node/ tz-apps@86000000;
++/*
++		cont_splash_mem: framebuffer@83000000 {
++			compatible = "removed-dma-pool";
++			reg = <0x0 0x83000000 0x0 0x2000000>;
++			no-map;
++		};*/
++        tz-apps@8c400000 {
++			reg = <0x0 0x8c400000 0x0 0x1900000>;
++			no-map;
++		};
++	};
++
++    gpio-keys {
++		compatible = "gpio-keys";
++
++		pinctrl-names = "default";
++
++		label = "GPIO Buttons";
++
++		volume-up {
++			label = "Volume Up";
++			gpios = <&msmgpio 107 GPIO_ACTIVE_LOW>;
++			linux,code = <KEY_VOLUMEUP>;
++		};
++	};
++
++    bat: battery {
++        compatible = "simple-battery";
++        voltage-max-design-microvolt = <4350000>;
++		voltage-min-design-microvolt = <3300000>;
++    };
++
++    usb_id: usb-id {
++		compatible = "linux,extcon-usb-gpio";
++		id-gpio = <&msmgpio 110 GPIO_ACTIVE_HIGH>;
++		pinctrl-names = "default";
++		pinctrl-0 = <&usb_id_default>;
++	};
++
++    backlight: backlight {
++		compatible = "pwm-backlight";
++		pwms = <&pm8916_pwm 0 100000>;
++
++		brightness-levels = <1 255>;
++		num-interpolated-steps = <255>;
++		default-brightness-level = <255>;
++	};
++};
++
++&blsp1_uart2 {
++	status = "okay";
++};
++/*
++&blsp_i2c2 {
++	status = "okay";
++
++	tps65132@3e {
++		compatible = "ti,tps65132";
++		reg = <0x3e>;
++
++		pinctrl-names = "default";
++		pinctrl-0 = <&tps65132_en_default>;
++
++		reg_lcd_pos: outp {
++			regulator-name = "outp";
++			regulator-min-microvolt = <5000000>;
++			regulator-max-microvolt = <5000000>;
++			enable-gpios = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
++			regulator-active-discharge = <1>;
++		};
++
++		reg_lcd_neg: outn {
++			regulator-name = "outn";
++			regulator-min-microvolt = <5000000>;
++			regulator-max-microvolt = <5000000>;
++			enable-gpios = <&msmgpio 98 GPIO_ACTIVE_HIGH>;
++			regulator-active-discharge = <1>;
++		};
++	};
++};
++*/
++&blsp_i2c5 {
++	status = "okay";
++
++	touchscreen@3e {
++		/* Likely some other model but works just fine with this one */
++		compatible = "edt,edt-ft5306";
++		reg = <0x3e>;
++
++		interrupt-parent = <&msmgpio>;
++		interrupts = <13 0x2008>;
++
++		reset-gpios = <&msmgpio 12 GPIO_ACTIVE_LOW>;
++
++		vcc-supply = <&pm8916_l17>;
++		iovcc-supply = <&pm8916_l6>;
++
++		touchscreen-size-x = <720>;
++		touchscreen-size-y = <1280>;
++
++		pinctrl-names = "default";
++		pinctrl-0 = <&touchscreen_default>;
++	};
++};
++
++&blsp_i2c6 {
++	status = "okay";
++
++	led-controller@45 {
++		compatible = "awinic,aw2013";
++		reg = <0x45>;
++		#address-cells = <1>;
++		#size-cells = <0>;
++
++		vcc-supply = <&pm8916_l16>;
++
++		led@0 {
++			reg = <0>;
++			led-max-microamp = <15000>;
++			function = LED_FUNCTION_INDICATOR;
++			color = <LED_COLOR_ID_RED>;
++		};
++
++		led@1 {
++			reg = <1>;
++			led-max-microamp = <15000>;
++			function = LED_FUNCTION_INDICATOR;
++			color = <LED_COLOR_ID_GREEN>;
++		};
++
++		led@2 {
++			reg = <2>;
++			led-max-microamp = <15000>;
++			function = LED_FUNCTION_INDICATOR;
++			color = <LED_COLOR_ID_BLUE>;
++		};
++	};
++};
++
++&dsi0 {
++    pinctrl-names = "default", "sleep";
++	pinctrl-0 = <&mdss_default>;
++	pinctrl-1 = <&mdss_sleep>;
++
++	panel@0 {
++		compatible = "xiaomi,ido-panel";
++		reg = <0>;
++
++//        vsp-supply = <&reg_lcd_pos>;
++//		vsn-supply = <&reg_lcd_neg>;
++
++		backlight = <&backlight>;
++		reset-gpios = <&msmgpio 25 GPIO_ACTIVE_LOW>;
++
++		port {
++			panel_in: endpoint {
++				remote-endpoint = <&dsi0_out>;
++			};
++		};
++	};
++};
++
++&dsi0_out {
++	data-lanes = <0 1 2 3>;
++	remote-endpoint = <&panel_in>;
++};
++
++&dsi_phy0 {
++	qcom,dsi-phy-regulator-ldo-mode;
++};
++
++&mdss {
++	status = "okay";
++};
++
++&pm8916_bms {
++	status = "okay";
++
++	monitored-battery = <&bat>;
++};
++
++&pm8916_pwm {
++	status = "okay";
++	pinctrl-names = "default";
++	pinctrl-0 = <&pwm_out>;
++};
++
++&pm8916_resin {
++	status = "okay";
++	linux,code = <KEY_VOLUMEDOWN>;
++};
++
++&pm8916_vib {
++	status = "okay";
++};
++
++&pronto {
++	status = "okay";
++};
++
++&sdhc_1 {
++	status = "okay";
++
++	vmmc-supply = <&pm8916_l8>;
++	vqmmc-supply = <&pm8916_l5>;
++
++	pinctrl-names = "default", "sleep";
++	pinctrl-0 = <&sdc1_clk_on &sdc1_cmd_on &sdc1_data_on>;
++	pinctrl-1 = <&sdc1_clk_off &sdc1_cmd_off &sdc1_data_off>;
++};
++
++&sdhc_2 {
++	status = "okay";
++
++	vmmc-supply = <&pm8916_l11>;
++	vqmmc-supply = <&pm8916_l12>;
++
++	pinctrl-names = "default", "sleep";
++	pinctrl-0 = <&sdc2_clk_on &sdc2_cmd_on &sdc2_data_on &sdc2_cd_on>;
++	pinctrl-1 = <&sdc2_clk_off &sdc2_cmd_off &sdc2_data_off &sdc2_cd_off>;
++
++	cd-gpios = <&msmgpio 38 GPIO_ACTIVE_HIGH>;
++};
++
++&usb {
++	status = "okay";
++	extcon = <&usb_id>, <&usb_id>;
++};
++
++&usb_hs_phy {
++	extcon = <&usb_id>;
++    v1p8-supply = <&pm8916_l7>;
++	v3p3-supply = <&pm8916_l13>;
++};
++
++
++&rpm_requests {
++	smd_rpm_regulators: pm8916-regulators {
++		compatible = "qcom,rpm-pm8916-regulators";
++		vdd_l1_l2_l3-supply = <&pm8916_s3>;
++		vdd_l4_l5_l6-supply = <&pm8916_s4>;
++		vdd_l7-supply = <&pm8916_s4>;
++
++		pm8916_s3: s3 {
++			regulator-min-microvolt = <1200000>;
++			regulator-max-microvolt = <1300000>;
++		};
++
++		pm8916_s4: s4 {
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <2100000>;
++		};
++
++		pm8916_l1: l1 {
++			regulator-min-microvolt = <1225000>;
++			regulator-max-microvolt = <1225000>;
++		};
++
++		pm8916_l2: l2 {
++			regulator-min-microvolt = <1200000>;
++			regulator-max-microvolt = <1200000>;
++		};
++
++		pm8916_l4: l4 {
++			regulator-min-microvolt = <2050000>;
++			regulator-max-microvolt = <2050000>;
++		};
++
++		pm8916_l5: l5 {
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1800000>;
++		};
++
++		pm8916_l6: l6 {
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1800000>;
++			regulator-always-on;
++		};
++
++		pm8916_l7: l7 {
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <1800000>;
++		};
++
++		pm8916_l8: l8 {
++			regulator-min-microvolt = <2850000>;
++			regulator-max-microvolt = <2900000>;
++		};
++
++		pm8916_l9: l9 {
++			regulator-min-microvolt = <3300000>;
++			regulator-max-microvolt = <3300000>;
++		};
++
++		pm8916_l10: l10 {
++			regulator-min-microvolt = <2700000>;
++			regulator-max-microvolt = <2800000>;
++		};
++
++		pm8916_l11: l11 {
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <2950000>;
++			regulator-allow-set-load;
++			regulator-system-load = <200000>;
++		};
++
++		pm8916_l12: l12 {
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <2950000>;
++		};
++
++		pm8916_l13: l13 {
++			regulator-min-microvolt = <3075000>;
++			regulator-max-microvolt = <3075000>;
++		};
++
++		pm8916_l14: l14 {
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <3300000>;
++		};
++
++		pm8916_l15: l15 {
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <3300000>;
++		};
++
++		pm8916_l16: l16 {
++			regulator-min-microvolt = <1800000>;
++			regulator-max-microvolt = <3300000>;
++		};
++
++		pm8916_l17: l17 {
++			regulator-min-microvolt = <2850000>;
++			regulator-max-microvolt = <2850000>;
++            regulator-always-on;
++		};
++
++		pm8916_l18: l18 {
++			regulator-min-microvolt = <2700000>;
++			regulator-max-microvolt = <2700000>;
++		};
++	};
++};
++
++&msmgpio {
++	usb_id_default: usb-id-default {
++		pins = "gpio110";
++		function = "gpio";
++
++		drive-strength = <8>;
++		bias-pull-up;
++	};
++
++    tps65132_en_default: tps65132-en-default {
++		pins = "gpio97", "gpio98";
++		function = "gpio";
++
++		drive-strength = <2>;
++		bias-pull-down;
++	};
++
++    mdss {
++		mdss_default: mdss-default {
++			pins = "gpio25";
++			function = "gpio";
++
++			drive-strength = <8>;
++			bias-disable;
++		};
++		mdss_sleep: mdss-sleep {
++			pins = "gpio25";
++			function = "gpio";
++
++			drive-strength = <2>;
++			bias-pull-down;
++		};
++	};
++
++    touchscreen_default: touchscreen-default {
++		pins = "gpio13";
++		function = "gpio";
++
++		drive-strength = <2>;
++		bias-pull-up;
++
++		reset {
++			pins = "gpio12";
++			function = "gpio";
++
++			drive-strength = <2>;
++			bias-disable;
++		};
++	};
++
++};
++
++&pm8916_mpps {
++	pwm_out: mpp4 {
++		pins = "mpp4";
++		function = "digital";
++
++		output-low;
++		qcom,dtest = <1>;
++		power-source = <PM8916_MPP_VPH>;
++	};
++};
++
+diff --git a/arch/arm64/configs/msm8916_defconfig b/arch/arm64/configs/msm8916_defconfig
+index dd0b1460182ff..96e11ec677c05 100644
+--- a/arch/arm64/configs/msm8916_defconfig
++++ b/arch/arm64/configs/msm8916_defconfig
+@@ -1,4 +1,4 @@
+-CONFIG_LOCALVERSION="-msm8916"
++CONFIG_LOCALVERSION="-msm8939"
+ CONFIG_SYSVIPC=y
+ CONFIG_POSIX_MQUEUE=y
+ CONFIG_AUDIT=y
+@@ -287,6 +287,11 @@ CONFIG_QCOM_A53PLL=y
+ CONFIG_QCOM_CLK_APCS_MSM8916=y
+ CONFIG_QCOM_CLK_SMD_RPM=y
+ CONFIG_MSM_GCC_8916=y
++CONFIG_MSM_GCC_8939=y
++CONFIG_INTERCONNECT=y
++CONFIG_INTERCONNECT_QCOM=y
++CONFIG_INTERCONNECT_QCOM_MSM8939=y
++CONFIG_REGULATOR_ONSEMI_NCP6335D=y
+ CONFIG_HWSPINLOCK=y
+ CONFIG_HWSPINLOCK_QCOM=y
+ CONFIG_MAILBOX=y
+diff --git a/drivers/gpu/drm/panel/msm8916-generated/Makefile b/drivers/gpu/drm/panel/msm8916-generated/Makefile
+index 0f79ceb2c927c..32a5d0635a48a 100644
+--- a/drivers/gpu/drm/panel/msm8916-generated/Makefile
++++ b/drivers/gpu/drm/panel/msm8916-generated/Makefile
+@@ -24,3 +24,4 @@ obj-$(CONFIG_DRM_PANEL_MSM8916_GENERATED) += panel-wingtech-ebbg-otm1285a.o
+ obj-$(CONFIG_DRM_PANEL_MSM8916_GENERATED) += panel-wingtech-sharp-r69431.o
+ obj-$(CONFIG_DRM_PANEL_MSM8916_GENERATED) += panel-wingtech-tianma-hx8394d.o
+ obj-$(CONFIG_DRM_PANEL_MSM8916_GENERATED) += panel-wingtech-yassy-ili9881.o
++obj-$(CONFIG_DRM_PANEL_MSM8916_GENERATED) += panel-xiaomi-ili9881c-tianma.o
+diff --git a/drivers/gpu/drm/panel/msm8916-generated/panel-xiaomi-ili9881c-tianma.c b/drivers/gpu/drm/panel/msm8916-generated/panel-xiaomi-ili9881c-tianma.c
+new file mode 100644
+index 0000000000000..5849d7ae8c9a2
+--- /dev/null
++++ b/drivers/gpu/drm/panel/msm8916-generated/panel-xiaomi-ili9881c-tianma.c
+@@ -0,0 +1,259 @@
++// SPDX-License-Identifier: GPL-2.0-only
++// Copyright (c) 2022 FIXME
++// Generated with linux-mdss-dsi-panel-driver-generator from vendor device tree:
++//   Copyright (c) 2013, The Linux Foundation. All rights reserved. (FIXME)
++
++#include <linux/delay.h>
++#include <linux/gpio/consumer.h>
++#include <linux/module.h>
++#include <linux/of.h>
++
++#include <drm/drm_mipi_dsi.h>
++#include <drm/drm_modes.h>
++#include <drm/drm_panel.h>
++
++struct ili9881c_tianma {
++	struct drm_panel panel;
++	struct mipi_dsi_device *dsi;
++	struct gpio_desc *reset_gpio;
++	bool prepared;
++};
++
++static inline
++struct ili9881c_tianma *to_ili9881c_tianma(struct drm_panel *panel)
++{
++	return container_of(panel, struct ili9881c_tianma, panel);
++}
++
++#define dsi_dcs_write_seq(dsi, seq...) do {				\
++		static const u8 d[] = { seq };				\
++		int ret;						\
++		ret = mipi_dsi_dcs_write_buffer(dsi, d, ARRAY_SIZE(d));	\
++		if (ret < 0)						\
++			return ret;					\
++	} while (0)
++
++static void ili9881c_tianma_reset(struct ili9881c_tianma *ctx)
++{
++	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
++	usleep_range(5000, 6000);
++	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
++	usleep_range(10000, 11000);
++	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
++	msleep(80);
++}
++
++static int ili9881c_tianma_on(struct ili9881c_tianma *ctx)
++{
++	struct mipi_dsi_device *dsi = ctx->dsi;
++
++	dsi_dcs_write_seq(dsi, 0xff, 0x98, 0x81, 0x00);
++	dsi_dcs_write_seq(dsi, 0x11, 0x00);
++	msleep(120);
++	dsi_dcs_write_seq(dsi, 0x29, 0x00);
++	usleep_range(10000, 11000);
++	dsi_dcs_write_seq(dsi, 0xff, 0x98, 0x81, 0x04);
++	dsi_dcs_write_seq(dsi, 0x92, 0x0f);
++	dsi_dcs_write_seq(dsi, 0x21, 0xb0);
++	dsi_dcs_write_seq(dsi, 0xff, 0x98, 0x81, 0x05);
++	dsi_dcs_write_seq(dsi, 0x00, 0x00);
++	dsi_dcs_write_seq(dsi, 0x7f, 0x89);
++	dsi_dcs_write_seq(dsi, 0xff, 0x98, 0x81, 0x06);
++	dsi_dcs_write_seq(dsi, 0x00, 0x89);
++	dsi_dcs_write_seq(dsi, 0x7f, 0x8c);
++	dsi_dcs_write_seq(dsi, 0xff, 0x98, 0x81, 0x07);
++	dsi_dcs_write_seq(dsi, 0x00, 0x00);
++	dsi_dcs_write_seq(dsi, 0x7f, 0x00);
++	dsi_dcs_write_seq(dsi, 0xff, 0x98, 0x81, 0x08);
++	dsi_dcs_write_seq(dsi, 0x00, 0x00);
++	dsi_dcs_write_seq(dsi, 0x7f, 0x00);
++	dsi_dcs_write_seq(dsi, 0xff, 0x98, 0x81, 0x09);
++	dsi_dcs_write_seq(dsi, 0x00, 0x00);
++	dsi_dcs_write_seq(dsi, 0x7f, 0x00);
++	dsi_dcs_write_seq(dsi, 0xff, 0x98, 0x81, 0x0a);
++	dsi_dcs_write_seq(dsi, 0x00, 0x00);
++	dsi_dcs_write_seq(dsi, 0x7f, 0x00);
++	dsi_dcs_write_seq(dsi, 0xff, 0x98, 0x81, 0x00);
++
++	return 0;
++}
++
++static int ili9881c_tianma_off(struct ili9881c_tianma *ctx)
++{
++	struct mipi_dsi_device *dsi = ctx->dsi;
++	struct device *dev = &dsi->dev;
++	int ret;
++
++	ret = mipi_dsi_dcs_set_display_off(dsi);
++	if (ret < 0) {
++		dev_err(dev, "Failed to set display off: %d\n", ret);
++		return ret;
++	}
++	msleep(31);
++
++	ret = mipi_dsi_dcs_enter_sleep_mode(dsi);
++	if (ret < 0) {
++		dev_err(dev, "Failed to enter sleep mode: %d\n", ret);
++		return ret;
++	}
++	msleep(140);
++
++	return 0;
++}
++
++static int ili9881c_tianma_prepare(struct drm_panel *panel)
++{
++	struct ili9881c_tianma *ctx = to_ili9881c_tianma(panel);
++	struct device *dev = &ctx->dsi->dev;
++	int ret;
++
++	if (ctx->prepared)
++		return 0;
++
++	ili9881c_tianma_reset(ctx);
++
++	ret = ili9881c_tianma_on(ctx);
++	if (ret < 0) {
++		dev_err(dev, "Failed to initialize panel: %d\n", ret);
++		gpiod_set_value_cansleep(ctx->reset_gpio, 1);
++		return ret;
++	}
++
++	ctx->prepared = true;
++	return 0;
++}
++
++static int ili9881c_tianma_unprepare(struct drm_panel *panel)
++{
++	struct ili9881c_tianma *ctx = to_ili9881c_tianma(panel);
++	struct device *dev = &ctx->dsi->dev;
++	int ret;
++
++	if (!ctx->prepared)
++		return 0;
++
++	ret = ili9881c_tianma_off(ctx);
++	if (ret < 0)
++		dev_err(dev, "Failed to un-initialize panel: %d\n", ret);
++
++	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
++
++	ctx->prepared = false;
++	return 0;
++}
++
++static const struct drm_display_mode ili9881c_tianma_mode = {
++	.clock = (720 + 86 + 8 + 180) * (1280 + 40 + 4 + 18) * 60 / 1000,
++	.hdisplay = 720,
++	.hsync_start = 720 + 86,
++	.hsync_end = 720 + 86 + 8,
++	.htotal = 720 + 86 + 8 + 180,
++	.vdisplay = 1280,
++	.vsync_start = 1280 + 40,
++	.vsync_end = 1280 + 40 + 4,
++	.vtotal = 1280 + 40 + 4 + 18,
++	.width_mm = 62,
++	.height_mm = 110,
++};
++
++static int ili9881c_tianma_get_modes(struct drm_panel *panel,
++				     struct drm_connector *connector)
++{
++	struct drm_display_mode *mode;
++
++	mode = drm_mode_duplicate(connector->dev, &ili9881c_tianma_mode);
++	if (!mode)
++		return -ENOMEM;
++
++	drm_mode_set_name(mode);
++
++	mode->type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
++	connector->display_info.width_mm = mode->width_mm;
++	connector->display_info.height_mm = mode->height_mm;
++	drm_mode_probed_add(connector, mode);
++
++	return 1;
++}
++
++static const struct drm_panel_funcs ili9881c_tianma_panel_funcs = {
++	.prepare = ili9881c_tianma_prepare,
++	.unprepare = ili9881c_tianma_unprepare,
++	.get_modes = ili9881c_tianma_get_modes,
++};
++
++static int ili9881c_tianma_probe(struct mipi_dsi_device *dsi)
++{
++	struct device *dev = &dsi->dev;
++	struct ili9881c_tianma *ctx;
++	int ret;
++
++	ctx = devm_kzalloc(dev, sizeof(*ctx), GFP_KERNEL);
++	if (!ctx)
++		return -ENOMEM;
++
++	ctx->reset_gpio = devm_gpiod_get(dev, "reset", GPIOD_OUT_HIGH);
++	if (IS_ERR(ctx->reset_gpio))
++		return dev_err_probe(dev, PTR_ERR(ctx->reset_gpio),
++				     "Failed to get reset-gpios\n");
++
++	ctx->dsi = dsi;
++	mipi_dsi_set_drvdata(dsi, ctx);
++
++	dsi->lanes = 4;
++	dsi->format = MIPI_DSI_FMT_RGB888;
++	dsi->mode_flags = MIPI_DSI_MODE_VIDEO | MIPI_DSI_MODE_VIDEO_BURST |
++			  MIPI_DSI_MODE_VIDEO_HSE | MIPI_DSI_MODE_NO_EOT_PACKET |
++			  MIPI_DSI_CLOCK_NON_CONTINUOUS | MIPI_DSI_MODE_LPM;
++
++	drm_panel_init(&ctx->panel, dev, &ili9881c_tianma_panel_funcs,
++		       DRM_MODE_CONNECTOR_DSI);
++
++	ret = drm_panel_of_backlight(&ctx->panel);
++	if (ret)
++		return dev_err_probe(dev, ret, "Failed to get backlight\n");
++
++	drm_panel_add(&ctx->panel);
++
++	ret = mipi_dsi_attach(dsi);
++	if (ret < 0) {
++		dev_err(dev, "Failed to attach to DSI host: %d\n", ret);
++		drm_panel_remove(&ctx->panel);
++		return ret;
++	}
++
++	return 0;
++}
++
++static int ili9881c_tianma_remove(struct mipi_dsi_device *dsi)
++{
++	struct ili9881c_tianma *ctx = mipi_dsi_get_drvdata(dsi);
++	int ret;
++
++	ret = mipi_dsi_detach(dsi);
++	if (ret < 0)
++		dev_err(&dsi->dev, "Failed to detach from DSI host: %d\n", ret);
++
++	drm_panel_remove(&ctx->panel);
++
++	return 0;
++}
++
++static const struct of_device_id ili9881c_tianma_of_match[] = {
++	{ .compatible = "xiaomi,tianma-ili9881c" }, // FIXME
++	{ /* sentinel */ }
++};
++MODULE_DEVICE_TABLE(of, ili9881c_tianma_of_match);
++
++static struct mipi_dsi_driver ili9881c_tianma_driver = {
++	.probe = ili9881c_tianma_probe,
++	.remove = ili9881c_tianma_remove,
++	.driver = {
++		.name = "panel-ili9881c-tianma",
++		.of_match_table = ili9881c_tianma_of_match,
++	},
++};
++module_mipi_dsi_driver(ili9881c_tianma_driver);
++
++MODULE_AUTHOR("linux-mdss-dsi-panel-driver-generator <fix@me>"); // FIXME
++MODULE_DESCRIPTION("DRM driver for ili9881c_HD720p_video_Tianma");
++MODULE_LICENSE("GPL v2");

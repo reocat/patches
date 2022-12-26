@@ -1,0 +1,19 @@
+From bb64e5d3ae1d9592b1a6b6cabbf86451cf8a575c Mon Sep 17 00:00:00 2001
+From: reocat <111279389+reocat@users.noreply.github.com>
+Date: Sun, 18 Dec 2022 13:43:55 +0300
+Subject: [PATCH] Update msm8916_defconfig
+
+---
+ arch/arm64/configs/msm8916_defconfig | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/arch/arm64/configs/msm8916_defconfig b/arch/arm64/configs/msm8916_defconfig
+index 96e11ec677c0..766e21d09ec1 100644
+--- a/arch/arm64/configs/msm8916_defconfig
++++ b/arch/arm64/configs/msm8916_defconfig
+@@ -380,3 +380,5 @@ CONFIG_DEBUG_KERNEL=y
+ # CONFIG_SCHED_DEBUG is not set
+ # CONFIG_DEBUG_PREEMPT is not set
+ # CONFIG_FTRACE is not set
++CONFIG_TEST_POWER=m
++CONFIG_CW2015=y

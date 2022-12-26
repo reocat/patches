@@ -1,0 +1,21 @@
+From 2e3cabd456f7b751f189451bb375f57d13d0830e Mon Sep 17 00:00:00 2001
+From: reocat <111279389+reocat@users.noreply.github.com>
+Date: Sun, 18 Dec 2022 13:38:46 +0300
+Subject: [PATCH] Update Makefile
+
+---
+ drivers/power/supply/Makefile | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/drivers/power/supply/Makefile b/drivers/power/supply/Makefile
+index 98a4318b43a5c..c11daf0d76577 100644
+--- a/drivers/power/supply/Makefile
++++ b/drivers/power/supply/Makefile
+@@ -8,6 +8,7 @@ power_supply-$(CONFIG_LEDS_TRIGGERS)	+= power_supply_leds.o
+ obj-$(CONFIG_POWER_SUPPLY)	+= power_supply.o
+ obj-$(CONFIG_POWER_SUPPLY_HWMON) += power_supply_hwmon.o
+ obj-$(CONFIG_GENERIC_ADC_BATTERY)	+= generic-adc-battery.o
++obj-m += fake_battery.o
+ 
+ obj-$(CONFIG_PDA_POWER)		+= pda_power.o
+ obj-$(CONFIG_APM_POWER)		+= apm_power.o
